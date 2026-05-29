@@ -3,6 +3,7 @@
  */
 
 import { resumeAudio } from './audio.js';
+import { unlockSpeech } from './speech.js';
 
 /** True on iOS (iPhone, iPad, iPod) including iPadOS desktop mode */
 export function isIOS() {
@@ -17,11 +18,12 @@ export function initTouchSupport() {
   document.documentElement.classList.toggle('is-ios', isIOS());
 
   // Unlock Web Audio on first touch anywhere
-  const unlockAudio = () => {
+  const unlockOnFirstTouch = () => {
     resumeAudio();
+    unlockSpeech();
   };
-  document.addEventListener('touchstart', unlockAudio, { passive: true, once: true });
-  document.addEventListener('click', unlockAudio, { once: true });
+  document.addEventListener('touchstart', unlockOnFirstTouch, { passive: true, once: true });
+  document.addEventListener('click', unlockOnFirstTouch, { once: true });
 
   // Keep layout stable when Safari shows/hides toolbars
   const setAppHeight = () => {

@@ -1,38 +1,111 @@
 /**
  * Reading Adventure - Text-to-speech (tap words to hear them)
- * Uses the browser Web Speech API.
+ * Uses the Web Speech API with iOS Safari workarounds.
  */
 
-let speakingWord = null;
+let voicesCache = [];
+let iosKeepAliveId = null;
+let lastSpeakAt = 0;
 
-/** Speak a single word (requires user tap on iOS; works even when game SFX are muted) */
+function isIOS() {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
+}
+
+function isGameScreenActive() {
+  return document.getElementById('screen-game')?.classList.contains('active');
+}
+
+/** Warm up speech on first user touch (required on iPad) */
+export function unlockSpeech() {
+  if (!('speechSynthesis' in window)) return;
+  const synth = window.speechSynthesis;
+  voicesCache = synth.getVoices();
+  if (typeof synth.resume === 'function') synth.resume();
+}
+
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  voicesCache = window.speechSynthesis.getVoices();
+}
+
+function getEnglishVoice() {
+  const voices = voicesCache.length
+    ? voicesCache
+    : window.speechSynthesis.getVoices();
+  return (
+    voices.find((v) => v.lang === 'en-US') ||
+    voices.find((v) => v.lang.startsWith('en')) ||
+    voices[0] ||
+    null
+  );
+}
+
+function startIOSKeepAlive() {
+  if (!isIOS()) return;
+  stopIOSKeepAlive();
+  iosKeepAliveId = window.setInterval(() => {
+    const synth = window.speechSynthesis;
+    if (!synth.speaking && !synth.pending) {
+      stopIOSKeepAlive();
+      return;
+    }
+    synth.pause();
+    synth.resume();
+  }, 250);
+}
+
+function stopIOSKeepAlive() {
+  if (iosKeepAliveId !== null) {
+    window.clearInterval(iosKeepAliveId);
+    iosKeepAliveId = null;
+  }
+}
+
+/** Speak a single word (must run directly from a tap handler on iOS) */
 export function speakWord(word) {
-  if (!word || !('speechSynthesis' in window)) return;
+  if (!word || !('speechSynthesis' in window)) return false;
 
   const text = word.replace(/[^\w'-]/g, '');
-  if (!text) return;
+  if (!text) return false;
 
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  loadVoices();
+
+  if (typeof synth.resume === 'function') synth.resume();
+
+  // iOS bug: cancel() then speak() in the same gesture often produces silence
+  if (!isIOS() && (synth.speaking || synth.pending)) {
+    synth.cancel();
+  }
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'en-US';
-  utterance.rate = 0.85;
+  utterance.rate = isIOS() ? 0.9 : 0.85;
   utterance.pitch = 1.05;
+  utterance.volume = 1;
 
-  const voices = window.speechSynthesis.getVoices();
-  const enVoice =
-    voices.find((v) => v.lang.startsWith('en') && v.localService) ||
-    voices.find((v) => v.lang.startsWith('en'));
-  if (enVoice) utterance.voice = enVoice;
+  const voice = getEnglishVoice();
+  if (voice) utterance.voice = voice;
 
-  utterance.onend = () => clearSpeakingHighlight();
-  utterance.onerror = () => clearSpeakingHighlight();
+  utterance.onstart = () => startIOSKeepAlive();
+  utterance.onend = () => {
+    stopIOSKeepAlive();
+    clearSpeakingHighlight();
+  };
+  utterance.onerror = () => {
+    stopIOSKeepAlive();
+    clearSpeakingHighlight();
+  };
 
-  speakingWord = text;
-  window.speechSynthesis.speak(utterance);
+  synth.speak(utterance);
+  return true;
 }
 
 export function cancelSpeech() {
+  stopIOSKeepAlive();
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }
@@ -43,10 +116,44 @@ function clearSpeakingHighlight() {
   document.querySelectorAll('.speak-word.speaking').forEach((el) => {
     el.classList.remove('speaking');
   });
-  speakingWord = null;
 }
 
-/** Turn passage text into tappable word buttons */
+function getSpeakElement(event) {
+  const target = event.target;
+  if (target instanceof Element) {
+    return target.closest('.speak-word');
+  }
+  const parent = target?.parentElement;
+  return parent instanceof Element ? parent.closest('.speak-word') : null;
+}
+
+function getSpeakText(el) {
+  return el.getAttribute('data-speak') || el.dataset.speak || el.textContent.trim();
+}
+
+function handleSpeakTap(event) {
+  if (!isGameScreenActive()) return;
+
+  const el = getSpeakElement(event);
+  if (!el) return;
+
+  const now = Date.now();
+  if (now - lastSpeakAt < 280) return;
+  lastSpeakAt = now;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  document.querySelectorAll('.speak-word.speaking').forEach((node) => {
+    node.classList.remove('speaking');
+  });
+  el.classList.add('speaking');
+
+  unlockSpeech();
+  speakWord(getSpeakText(el));
+}
+
+/** Turn passage text into tappable words (spans — buttons are unreliable on iOS) */
 export function formatPassageWithSpeech(text) {
   let html = '';
   let remaining = text;
@@ -86,7 +193,11 @@ function wrapSpeakTokens(token) {
       if (!part) return '';
       const speakable = part.replace(/[^\w'-]/g, '');
       if (!speakable) return escapeHtml(part);
-      return `<button type="button" class="speak-word" data-speak="${escapeAttr(speakable)}" aria-label="Hear: ${escapeAttr(speakable)}">${escapeHtml(part)}</button>`;
+      return (
+        `<span class="speak-word" role="button" tabindex="0" ` +
+        `data-speak="${escapeAttr(speakable)}" ` +
+        `aria-label="Hear word: ${escapeAttr(speakable)}">${escapeHtml(part)}</span>`
+      );
     })
     .join('');
 }
@@ -101,31 +212,46 @@ function escapeAttr(str) {
   return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/** One listener for all tappable words in the game screen */
+/** Tap-to-speak on the gameplay screen */
 export function initGameSpeech(gameScreenEl) {
   if (!gameScreenEl || gameScreenEl.dataset.speechBound === 'true') return;
   gameScreenEl.dataset.speechBound = 'true';
 
-  gameScreenEl.addEventListener('click', (e) => {
-    const btn = e.target.closest('.speak-word');
-    if (!btn) return;
+  const opts = { capture: true };
+
+  if (isIOS()) {
+    gameScreenEl.addEventListener(
+      'touchend',
+      (e) => {
+        handleSpeakTap(e);
+      },
+      { ...opts, passive: false }
+    );
+    gameScreenEl.addEventListener(
+      'click',
+      (e) => {
+        if (getSpeakElement(e)) e.preventDefault();
+      },
+      opts
+    );
+  } else {
+    gameScreenEl.addEventListener('click', handleSpeakTap, opts);
+  }
+
+  gameScreenEl.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (!(e.target instanceof Element)) return;
+    const el = e.target.closest('.speak-word');
+    if (!el) return;
     e.preventDefault();
-    e.stopPropagation();
-
-    document.querySelectorAll('.speak-word.speaking').forEach((el) => {
-      el.classList.remove('speaking');
-    });
-    btn.classList.add('speaking');
-
-    speakWord(btn.dataset.speak);
+    unlockSpeech();
+    el.classList.add('speaking');
+    speakWord(getSpeakText(el));
   });
 }
 
-/** iOS loads voices asynchronously */
 export function preloadSpeechVoices() {
   if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.addEventListener('voiceschanged', () => {
-    window.speechSynthesis.getVoices();
-  });
+  loadVoices();
+  window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
 }
