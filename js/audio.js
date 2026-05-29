@@ -96,9 +96,15 @@ export function playHint() {
   playTone(440, 0.1, 'triangle', 0.2);
 }
 
-/** Resume audio context after user gesture */
+/** Resume audio context after user gesture (required on iOS Safari) */
 export function resumeAudio() {
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume();
+  try {
+    const ctx = getContext();
+    if (ctx.state === 'suspended') {
+      return ctx.resume();
+    }
+  } catch {
+    // Audio not available
   }
+  return Promise.resolve();
 }

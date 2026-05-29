@@ -51,6 +51,7 @@ import {
   showWelcomeCreate,
   renderHints,
 } from './ui.js';
+import { initTouchSupport } from './touch.js';
 import {
   resumeAudio,
   setMuted,
@@ -73,6 +74,7 @@ let pendingAchievements = [];
 
 // ── Initialization ──────────────────────────────────────────
 function init() {
+  initTouchSupport();
   bindEvents();
   const activeId = getActiveProfileId();
   if (activeId) {

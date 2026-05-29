@@ -1,10 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    /* GitHub Pages project sites live in a subfolder (e.g. /Reading_Adventure/) */
+    (function () {
+      var parts = location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      if (!parts.length) return;
+      var last = parts[parts.length - 1];
+      if (last.indexOf('.') !== -1) parts.pop();
+      if (!parts.length) return;
+      var base = document.createElement('base');
+      base.href = '/' + parts.join('/') + '/';
+      document.head.appendChild(base);
+    })();
+  </script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#667eea">
+  <meta name="format-detection" content="telephone=no">
   <title>Reading Adventure</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="./style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -253,6 +271,6 @@
     </div>
   </section>
 
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>
