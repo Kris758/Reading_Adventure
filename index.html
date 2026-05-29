@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reading Adventure</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Floating coin particles container -->
+  <div id="coin-particles" aria-hidden="true"></div>
+
+  <!-- Rank-up overlay -->
+  <div id="rank-up-overlay" class="overlay hidden" aria-hidden="true">
+    <div class="rank-up-card">
+      <div class="rank-up-burst"></div>
+      <p class="rank-up-label">Rank Up!</p>
+      <div id="rank-up-badge" class="rank-badge large"></div>
+      <h2 id="rank-up-title"></h2>
+      <p id="rank-up-message"></p>
+      <button class="btn btn-primary" id="rank-up-close">Awesome!</button>
+    </div>
+  </div>
+
+  <!-- Achievement popup -->
+  <div id="achievement-popup" class="achievement-toast hidden" role="alert">
+    <span class="achievement-icon">🏆</span>
+    <div>
+      <strong>Achievement Unlocked!</strong>
+      <p id="achievement-popup-text"></p>
+    </div>
+  </div>
+
+  <!-- Welcome / Profile Screen -->
+  <section id="screen-welcome" class="screen active">
+    <div class="welcome-bg"></div>
+    <div class="welcome-content">
+      <div class="logo-wrap">
+        <span class="logo-icon">📚</span>
+        <h1>Reading Adventure</h1>
+        <p class="tagline">Read. Explore. Become a Legend!</p>
+      </div>
+
+      <div id="profile-select" class="card profile-card hidden">
+        <h2>Welcome Back!</h2>
+        <div id="saved-profiles-list" class="profiles-list"></div>
+        <button class="btn btn-secondary" id="btn-new-profile">+ New Adventurer</button>
+      </div>
+
+      <div id="profile-create" class="card profile-card">
+        <h2>Create Your Adventurer</h2>
+        <label for="player-name">Your Name</label>
+        <input type="text" id="player-name" maxlength="20" placeholder="Enter your name..." autocomplete="off">
+        <button class="btn btn-primary" id="btn-start-adventure">Start Adventure!</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Hub -->
+  <section id="screen-hub" class="screen">
+    <header class="hub-header">
+      <div class="hub-title">
+        <span>📚</span>
+        <h1>Reading Adventure</h1>
+      </div>
+      <div class="hub-controls">
+        <button class="icon-btn" id="btn-mute" title="Toggle Sound" aria-label="Toggle Sound">🔊</button>
+        <button class="icon-btn" id="btn-achievements" title="Achievements" aria-label="Achievements">🏆</button>
+      </div>
+    </header>
+
+    <div class="hub-body">
+      <aside class="player-panel card">
+        <div class="avatar-display" id="hub-avatar">🧒</div>
+        <h2 id="hub-player-name">Adventurer</h2>
+        <div class="rank-display">
+          <div id="hub-rank-badge" class="rank-badge">🌱</div>
+          <div>
+            <p id="hub-rank-name" class="rank-name">Reading Rookie</p>
+            <div class="xp-bar-wrap">
+              <div id="hub-xp-bar" class="xp-bar" style="width: 0%"></div>
+            </div>
+            <p id="hub-xp-text" class="xp-text">0 / 100 XP</p>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat"><span class="stat-icon">🪙</span><span id="hub-coins">0</span><small>Coins</small></div>
+          <div class="stat"><span class="stat-icon">🎯</span><span id="hub-accuracy">0%</span><small>Accuracy</small></div>
+          <div class="stat"><span class="stat-icon">🔥</span><span id="hub-streak">0</span><small>Streak</small></div>
+        </div>
+      </aside>
+
+      <main class="hub-main">
+        <nav class="hub-tabs">
+          <button class="tab active" data-tab="worlds">🌍 Worlds</button>
+          <button class="tab" data-tab="shop">🛍️ Shop</button>
+          <button class="tab" data-tab="profile">👤 Profile</button>
+        </nav>
+
+        <!-- Worlds Tab -->
+        <div id="tab-worlds" class="tab-panel active">
+          <h2>Choose Your Adventure</h2>
+          <div id="worlds-grid" class="worlds-grid"></div>
+        </div>
+
+        <!-- Shop Tab -->
+        <div id="tab-shop" class="tab-panel">
+          <h2>Cosmetic Shop</h2>
+          <p class="shop-balance">Your coins: <strong id="shop-coins">0</strong> 🪙</p>
+          <div id="cosmetics-grid" class="cosmetics-grid"></div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="tab-profile" class="tab-panel">
+          <h2>Your Profile</h2>
+          <div class="profile-details card-inner">
+            <div class="profile-row"><span>Rank</span><strong id="profile-rank">Reading Rookie</strong></div>
+            <div class="profile-row"><span>Total XP</span><strong id="profile-xp">0</strong></div>
+            <div class="profile-row"><span>Coins</span><strong id="profile-coins">0</strong></div>
+            <div class="profile-row"><span>Accuracy</span><strong id="profile-accuracy">0%</strong></div>
+            <div class="profile-row"><span>Best Streak</span><strong id="profile-best-streak">0</strong></div>
+            <div class="profile-row"><span>Levels Completed</span><strong id="profile-levels">0</strong></div>
+            <div class="profile-row"><span>Cosmetics Owned</span><strong id="profile-cosmetics">0</strong></div>
+          </div>
+          <div class="equip-section">
+            <h3>Equipped</h3>
+            <div id="equipped-items" class="equipped-items"></div>
+          </div>
+          <button class="btn btn-secondary" id="btn-switch-profile">Switch Profile</button>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- Achievements Screen -->
+  <section id="screen-achievements" class="screen">
+    <header class="sub-header">
+      <button class="btn-back" id="btn-back-from-achievements">← Back</button>
+      <h2>Achievements</h2>
+    </header>
+    <div id="achievements-grid" class="achievements-grid"></div>
+  </section>
+
+  <!-- World Intro -->
+  <section id="screen-world-intro" class="screen">
+    <div id="world-intro-bg" class="world-intro-bg"></div>
+    <div class="world-intro-content card">
+      <span id="world-intro-icon" class="world-icon-large"></span>
+      <h2 id="world-intro-name"></h2>
+      <p id="world-intro-desc"></p>
+      <p class="world-difficulty">Difficulty: <span id="world-intro-diff"></span></p>
+      <button class="btn btn-primary" id="btn-start-world">Begin Reading!</button>
+      <button class="btn btn-ghost" id="btn-back-hub-from-world">← Back to Hub</button>
+    </div>
+  </section>
+
+  <!-- Level Intro -->
+  <section id="screen-level-intro" class="screen">
+    <div class="level-intro-content card">
+      <p class="level-label">Level <span id="level-intro-num">1</span></p>
+      <h2 id="level-intro-title">Reading Challenge</h2>
+      <p id="level-intro-desc">Answer questions to earn coins and XP!</p>
+      <div class="level-info-pills">
+        <span id="level-intro-questions" class="pill">5 Questions</span>
+        <span id="level-intro-type" class="pill">Mixed Reading</span>
+        <span id="level-intro-diff" class="pill">Easy</span>
+      </div>
+      <button class="btn btn-primary btn-lg" id="btn-start-level">Let's Read!</button>
+    </div>
+  </section>
+
+  <!-- Gameplay Screen -->
+  <section id="screen-game" class="screen">
+    <header class="game-header">
+      <button class="btn-back" id="btn-quit-level">← Quit</button>
+      <div class="game-progress">
+        <span id="game-question-num">1/5</span>
+        <div class="progress-bar-wrap">
+          <div id="game-progress-bar" class="progress-bar"></div>
+        </div>
+      </div>
+      <div class="game-coins">🪙 <span id="game-session-coins">0</span></div>
+    </header>
+
+    <div class="game-body">
+      <div class="passage-card card" id="passage-card">
+        <span id="question-type-badge" class="type-badge">Word Reading</span>
+        <div id="passage-text" class="passage-text"></div>
+        <div id="highlight-sentence" class="highlight-sentence hidden"></div>
+      </div>
+
+      <div class="question-card card">
+        <h3 id="question-prompt" class="question-prompt"></h3>
+        <div id="answer-options" class="answer-options"></div>
+        <div id="feedback-area" class="feedback-area hidden">
+          <p id="feedback-text"></p>
+          <button class="btn btn-primary" id="btn-next-question">Next →</button>
+        </div>
+      </div>
+
+      <!-- Hint Shop Panel -->
+      <div class="hints-panel card">
+        <h4>Need a Clue? 🕵️</h4>
+        <p class="hints-note">Try first! Hints cost coins. (<span id="hints-used">0</span>/<span id="hints-max">3</span> used)</p>
+        <div id="hints-grid" class="hints-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results Screen -->
+  <section id="screen-results" class="screen">
+    <div class="results-content card">
+      <div id="results-outcome" class="results-outcome">🌟</div>
+      <h2 id="results-title">Level Complete!</h2>
+      <p id="results-message"></p>
+
+      <div class="results-stats">
+        <div class="result-stat">
+          <span class="result-label">Accuracy</span>
+          <span id="results-accuracy" class="result-value">0%</span>
+        </div>
+        <div class="result-stat">
+          <span class="result-label">Coins Earned</span>
+          <span id="results-coins" class="result-value gold">+0 🪙</span>
+        </div>
+        <div class="result-stat">
+          <span class="result-label">XP Gained</span>
+          <span id="results-xp" class="result-value purple">+0 XP</span>
+        </div>
+        <div class="result-stat">
+          <span class="result-label">Streak Bonus</span>
+          <span id="results-streak-bonus" class="result-value">+0 🪙</span>
+        </div>
+      </div>
+
+      <div class="results-rank-progress">
+        <p>Rank Progress</p>
+        <div class="xp-bar-wrap">
+          <div id="results-xp-bar" class="xp-bar" style="width: 0%"></div>
+        </div>
+        <p id="results-rank-text" class="xp-text"></p>
+      </div>
+
+      <p id="results-difficulty-note" class="difficulty-note"></p>
+
+      <div class="results-actions">
+        <button class="btn btn-primary" id="btn-next-level">Next Level →</button>
+        <button class="btn btn-secondary" id="btn-back-hub">Back to Hub</button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
