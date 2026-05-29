@@ -13,9 +13,67 @@ export function isIOS() {
   );
 }
 
+const INTERACTIVE_SELECTOR = [
+  'button',
+  'a',
+  'input',
+  'textarea',
+  'select',
+  'label',
+  '[role="button"]',
+  '.btn',
+  '.icon-btn',
+  '.tab',
+  '.answer-btn',
+  '.hint-btn',
+  '.btn-back',
+  '.profile-item',
+  '.world-card',
+  '.speak-word',
+  '.cosmetic-btn',
+].join(', ');
+
+function isInteractiveTarget(target) {
+  return target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
+}
+
+/** Block pinch-zoom and double-tap zoom on iOS/iPad */
+function preventZoomGestures() {
+  const block = (e) => e.preventDefault();
+
+  document.addEventListener('gesturestart', block, { passive: false });
+  document.addEventListener('gesturechange', block, { passive: false });
+  document.addEventListener('gestureend', block, { passive: false });
+
+  document.addEventListener(
+    'touchmove',
+    (e) => {
+      if (e.touches.length > 1) block(e);
+    },
+    { passive: false }
+  );
+
+  // iOS Safari: block double-tap zoom on text/background (keep buttons tappable)
+  let lastTouchEnd = 0;
+  document.addEventListener(
+    'touchend',
+    (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        if (!isInteractiveTarget(e.target)) {
+          block(e);
+        }
+      }
+      lastTouchEnd = now;
+    },
+    { passive: false }
+  );
+}
+
 /** Wire global gestures needed for reliable iPad play */
 export function initTouchSupport() {
   document.documentElement.classList.toggle('is-ios', isIOS());
+  preventZoomGestures();
 
   // Unlock Web Audio on first touch anywhere
   const unlockOnFirstTouch = () => {
