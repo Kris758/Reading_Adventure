@@ -432,9 +432,40 @@ export const QUESTION_BANK = {
   ],
 };
 
+/** Fisher-Yates shuffle — fair random order */
+export function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/**
+ * Randomize multiple-choice order with the correct answer in a random slot
+ * (not stuck in the same position as the question bank).
+ */
+export function shuffleOptions(options, correctAnswer) {
+  const wrong = options.filter((o) => o !== correctAnswer);
+  const shuffledWrong = shuffleArray(wrong);
+  const slot = Math.floor(Math.random() * (shuffledWrong.length + 1));
+  const result = [...shuffledWrong];
+  result.splice(slot, 0, correctAnswer);
+  return result;
+}
+
+/** Clone a question with freshly randomized answer choices */
+export function withShuffledOptions(question) {
+  return {
+    ...question,
+    options: shuffleOptions([...question.options], question.answer),
+  };
+}
+
 /**
  * Pick questions for a level based on difficulty tier and count.
- * Shuffles and avoids immediate repeats using usedIds set.
+ * Randomizes order and avoids repeats using usedIds set.
  */
 export function selectQuestions(tier, count, usedIds = new Set()) {
   const pool = QUESTION_BANK[tier] || QUESTION_BANK[1];
@@ -447,16 +478,17 @@ export function selectQuestions(tier, count, usedIds = new Set()) {
     if (adjTier) source = [...source, ...adjTier];
   }
 
-  const shuffled = [...source].sort(() => Math.random() - 0.5);
-  const selected = shuffled.slice(0, count);
+  const selected = shuffleArray(source).slice(0, count);
 
-  // Track used question indices
+  // Track used question indices (before cloning for shuffle)
   selected.forEach((q) => {
     const idx = pool.indexOf(q);
     if (idx >= 0) usedIds.add(`${tier}-${idx}`);
   });
 
-  return { questions: selected, usedIds };
+  const questions = shuffleArray(selected).map(withShuffledOptions);
+
+  return { questions, usedIds };
 }
 
 /**

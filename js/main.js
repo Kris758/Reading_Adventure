@@ -52,6 +52,7 @@ import {
   renderHints,
 } from './ui.js';
 import { initTouchSupport } from './touch.js';
+import { preloadSpeechVoices, initGameSpeech } from './speech.js';
 import {
   resumeAudio,
   setMuted,
@@ -75,6 +76,8 @@ let pendingAchievements = [];
 // ── Initialization ──────────────────────────────────────────
 function init() {
   initTouchSupport();
+  preloadSpeechVoices();
+  initGameSpeech(document.getElementById('screen-game'));
   bindEvents();
   const activeId = getActiveProfileId();
   if (activeId) {

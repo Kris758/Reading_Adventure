@@ -820,11 +820,66 @@ body {
   border-radius: 50px;
 }
 
-.passage-text {
+.tts-hint {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  font-weight: 600;
+  margin: 0.25rem 0 0;
+}
+
+.passage-text,
+.question-prompt,
+.highlight-sentence {
   font-size: clamp(1.05rem, 3vw, 1.25rem);
   line-height: 1.7;
   color: var(--text);
   padding-top: 0.5rem;
+}
+
+.passage-text .speak-word,
+.question-prompt .speak-word,
+.highlight-sentence .speak-word {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0.1em 0.05em;
+  margin: 0;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.passage-text .speak-word:hover,
+.question-prompt .speak-word:hover,
+.highlight-sentence .speak-word:hover {
+  background: #e8e4ff;
+  color: var(--primary);
+}
+
+.passage-text .speak-word.speaking,
+.question-prompt .speak-word.speaking,
+.highlight-sentence .speak-word.speaking {
+  background: var(--primary);
+  color: white;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .passage-text .speak-word:hover,
+  .question-prompt .speak-word:hover,
+  .highlight-sentence .speak-word:hover {
+    background: none;
+    color: inherit;
+  }
+
+  .passage-text .speak-word:active,
+  .question-prompt .speak-word:active,
+  .highlight-sentence .speak-word:active {
+    background: #e8e4ff;
+    color: var(--primary);
+  }
 }
 
 .highlight-sentence {
@@ -847,6 +902,8 @@ body {
   font-size: clamp(1.1rem, 3vw, 1.35rem);
   color: var(--primary);
   margin-bottom: 1rem;
+  padding-top: 0;
+  line-height: 1.5;
 }
 
 .answer-options {

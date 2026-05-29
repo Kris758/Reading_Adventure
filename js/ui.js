@@ -17,6 +17,7 @@ import {
 } from '../data/config.js';
 import { getProfileRank, getAccuracy, getWorldProgress } from './profile.js';
 import { getTypeLabel, getDisplayAvatar } from './gameEngine.js';
+import { formatPassageWithSpeech, cancelSpeech } from './speech.js';
 
 /** Show a specific screen, hide all others */
 export function showScreen(screenId) {
@@ -175,9 +176,15 @@ export function renderQuestion(state, profile) {
   document.getElementById('game-session-coins').textContent = state.sessionCoins;
   document.getElementById('question-type-badge').textContent = getTypeLabel(q.type);
 
-  document.getElementById('passage-text').innerHTML = formatPassage(q.passage);
-  document.getElementById('highlight-sentence').classList.add('hidden');
-  document.getElementById('question-prompt').textContent = q.prompt;
+  cancelSpeech();
+
+  document.getElementById('passage-text').innerHTML = formatPassageWithSpeech(q.passage);
+
+  const highlightEl = document.getElementById('highlight-sentence');
+  highlightEl.classList.add('hidden');
+  highlightEl.innerHTML = '';
+
+  document.getElementById('question-prompt').innerHTML = formatPassageWithSpeech(q.prompt);
 
   const optionsEl = document.getElementById('answer-options');
   optionsEl.innerHTML = q.options
@@ -256,7 +263,7 @@ export function applyHintEffect(result) {
   }
   if (result.keySentence) {
     const el = document.getElementById('highlight-sentence');
-    el.textContent = `🔍 Key Evidence: "${result.keySentence}"`;
+    el.innerHTML = `🔍 Key Evidence: "${formatPassageWithSpeech(result.keySentence)}"`;
     el.classList.remove('hidden');
   }
   if (result.eliminate) {
@@ -372,11 +379,6 @@ function getPositiveFeedback() {
     'Reading champion! 🏆',
   ];
   return messages[Math.floor(Math.random() * messages.length)];
-}
-
-/** Format passage text — convert **bold** to <strong> */
-function formatPassage(text) {
-  return escapeHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 }
 
 function escapeHtml(str) {

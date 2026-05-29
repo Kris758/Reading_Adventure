@@ -10,7 +10,7 @@ import {
   ADAPTIVE,
   QUESTION_TYPES,
 } from '../data/config.js';
-import { selectQuestions, getQuestionCount } from '../data/questions.js';
+import { selectQuestions, getQuestionCount, shuffleArray } from '../data/questions.js';
 import { getWorldProgress } from './profile.js';
 
 /** Active level state (in-memory during gameplay) */
@@ -23,14 +23,14 @@ export function createLevelState(world, profile) {
     new Set(progress.usedQuestionIds || [])
   );
 
-  // Persist used question IDs
+  // Persist used question IDs (match against bank entries, not shuffled copies)
   progress.usedQuestionIds = [...usedIds];
 
   return {
     world,
     levelNum: progress.level,
     difficultyTier: progress.difficultyTier,
-    questions,
+    questions, // each question already has shuffled options from selectQuestions
     currentIndex: 0,
     correctCount: 0,
     sessionCoins: 0,
@@ -205,8 +205,7 @@ export function useHint(state, profile, hintId) {
 /** Remove N wrong options from the question */
 function eliminateWrongOptions(question, count) {
   const wrong = question.options.filter((o) => o !== question.answer);
-  const shuffled = wrong.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  return shuffleArray(wrong).slice(0, count);
 }
 
 /** Get question type display label */
